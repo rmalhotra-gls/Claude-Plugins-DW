@@ -1,0 +1,16 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
+  "name": "dw-engineer",
+  "description": "GLS Auto Data Warehouse & BI Team skill library — Snowflake SQL standards, peer review, Python/Prefect review, SQL formatting, and code optimization.",
+  "owner": {
+    "name": "GLS Auto Data Warehouse & BI Team"
+  },
+  "plugins": [
+    {
+      "name": "dw-engineer",
+      "description": "GLS-specific Snowflake SQL architecture standards, SQL peer review, Python/Prefect peer review, SQL formatting, and code optimization.",
+      "source": "./",
+      "category": "development"
+    }
+  ]
+}
