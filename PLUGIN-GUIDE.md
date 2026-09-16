@@ -2,59 +2,68 @@
 
 ---
 
-## 1. How to Build a Plugin (Our Way)
+## What is a plugin?
 
-One repo. Skills inside. Git-distributed. No build step.
+A plugin is a folder of instructions that teaches Claude how your team works. When you install a plugin, Claude automatically follows those instructions every time they apply — you don't have to repeat yourself.
 
-### Folder Structure
+Think of it like this: instead of telling Claude "here are our SQL formatting rules" every single time, you write those rules once in a plugin, and Claude knows them forever.
+
+---
+
+## 1. How We Built Our Plugin
+
+We put everything in a GitHub repo. The repo has a specific folder layout that Claude Code knows how to read. That's it — no special tools, no compiling, no building. Just folders and text files.
+
+### What the folder looks like
 
 ```
-your-plugin-name/
+dw-engineer-plugin/
+│
 ├── .claude-plugin/
-│   └── marketplace.json        ← declares what plugins live in this repo
+│   └── marketplace.json        ← tells Claude "here's a plugin in this repo"
+│
 ├── plugins/
-│   └── your-plugin-name/
+│   └── dw-engineer/
 │       ├── .claude-plugin/
-│       │   └── plugin.json     ← name, version, author
+│       │   └── plugin.json     ← name, version, who made it
 │       └── skills/
-│           ├── skill-one/
-│           │   └── SKILL.md    ← the actual skill instructions
-│           ├── skill-two/
+│           ├── sql-peer-reviewer/
+│           │   └── SKILL.md    ← one skill = one file of instructions
+│           ├── sql-formatter/
 │           │   └── SKILL.md
-│           └── skill-three/
+│           ├── snowflake-sql-architecture-standards/
+│           │   └── SKILL.md
+│           ├── python-peer-reviewer/
+│           │   └── SKILL.md
+│           └── code-optimizer/
 │               └── SKILL.md
+│
 ├── .gitignore
 └── README.md
 ```
 
-### Steps
+### How to build one from scratch (step by step)
 
-**1 — Create the directories**
+**Step 1 — Make the folders**
 
-```
-mkdir your-plugin-name
-cd your-plugin-name
-mkdir .claude-plugin
-mkdir -p plugins/your-plugin-name/.claude-plugin
-mkdir -p plugins/your-plugin-name/skills
-```
+Create the folder structure shown above. Every plugin needs this exact layout. The names can change, but the structure can't.
 
-**2 — Write `marketplace.json`** (root level)
+**Step 2 — Create `marketplace.json`**
 
-Goes in `.claude-plugin/marketplace.json`. This is the repo-level manifest.
+This file lives in `.claude-plugin/marketplace.json` at the top of the repo. It tells Claude Code "this repo contains a plugin, and here's where to find it."
 
 ```json
 {
   "name": "your-plugin-name",
   "owner": { "name": "Your Team Name" },
   "metadata": {
-    "description": "One sentence. What this plugin gives Claude.",
+    "description": "One sentence about what this plugin does.",
     "version": "1.0.0"
   },
   "plugins": [
     {
       "name": "your-plugin-name",
-      "description": "Longer description of what skills are bundled.",
+      "description": "A longer description of what skills are included.",
       "version": "0.1.0",
       "source": "./plugins/your-plugin-name",
       "author": { "name": "Your Team Name" },
@@ -65,9 +74,9 @@ Goes in `.claude-plugin/marketplace.json`. This is the repo-level manifest.
 }
 ```
 
-**3 — Write `plugin.json`** (inside the plugin)
+**Step 3 — Create `plugin.json`**
 
-Goes in `plugins/your-plugin-name/.claude-plugin/plugin.json`.
+This file lives inside the plugin folder at `plugins/your-plugin-name/.claude-plugin/plugin.json`. It's the plugin's ID card.
 
 ```json
 {
@@ -81,29 +90,31 @@ Goes in `plugins/your-plugin-name/.claude-plugin/plugin.json`.
 }
 ```
 
-**4 — Add skills**
+**Step 4 — Write your skills**
 
-One folder per skill under `plugins/your-plugin-name/skills/`.
-Each folder contains exactly one file: `SKILL.md`.
+Each skill is a separate folder inside `plugins/your-plugin-name/skills/`. Each folder has one file: `SKILL.md`.
 
-Every `SKILL.md` starts with frontmatter:
+Every `SKILL.md` file starts with a header block (called "frontmatter") that tells Claude when to use it:
 
 ```markdown
 ---
 name: skill-name
-description: "When to trigger this skill. Be specific — list exact phrases."
+description: "Tell Claude when to use this skill. Be very specific."
 ---
 
 # Skill Title
 
-[The actual instructions Claude follows when this skill fires.]
+Write the actual instructions here. This is what Claude reads
+and follows when the skill gets triggered.
 ```
 
-**5 — Add README.md**
+**Step 5 — Add a README.md**
 
-At repo root. Table of skills, trigger phrases, install instructions.
+Put this at the top of the repo. List what skills are included and how to install. This is for humans, not Claude.
 
-**6 — Add .gitignore**
+**Step 6 — Add a .gitignore**
+
+Keeps local junk out of the shared repo:
 
 ```
 .claude/*.local.md
@@ -114,7 +125,9 @@ Thumbs.db
 .idea/
 ```
 
-**7 — Git init and push**
+**Step 7 — Push it to GitHub**
+
+Put the whole thing in a GitHub repo. Once it's there, anyone with access can install it.
 
 ```bash
 git init
@@ -124,127 +137,119 @@ git remote add origin https://github.com/your-org/your-repo.git
 git push -u origin main
 ```
 
-**8 — Team installs**
+**Step 8 — Done**
 
-Each team member adds to their `.claude/settings.json`:
-
-```json
-{
-  "plugins": [
-    { "path": "/path/to/cloned/repo" }
-  ]
-}
-```
-
-Or per-session: `cc --plugin-dir /path/to/repo`
-
-**9 — Updates**
-
-You push to GitHub → team pulls → skills update automatically. No rebuild. No reinstall.
+When you update a skill, push to GitHub. Everyone who has the plugin gets the update next time they open Claude Code. No reinstalling, no downloading, no extra steps.
 
 ---
 
 ## 2. When to Use a Plugin
 
-| Situation | Plugin? | Why |
+**Use a plugin when the same instructions need to be shared across multiple people.**
+
+| Situation | Use a plugin? | Why |
 |---|---|---|
-| Team shares the same coding standards | **Yes** | One source of truth, version-controlled |
-| Peer review needs to follow a specific framework every time | **Yes** | Consistency across reviewers |
-| Multiple skills need to work together (reviewer calls formatter) | **Yes** | Bundle dependencies in one package |
-| New team members need Claude to "just know" your patterns | **Yes** | Onboarding without tribal knowledge |
-| Standards change and everyone needs the update | **Yes** | Push once, team pulls, done |
-| You want governance over what Claude knows | **Yes** | Git history, PRs, code review on the skills themselves |
-| Formatting rules that must be identical across the team | **Yes** | No drift between individual setups |
+| The whole team needs to follow the same SQL formatting rules | Yes | Everyone gets the same rules, no one drifts |
+| Code reviews need to check the same things every time | Yes | Consistency — Claude doesn't forget a checklist item |
+| Multiple skills depend on each other (reviewer needs the formatter) | Yes | They all live together in one package |
+| A new person joins and needs Claude to already know your standards | Yes | No onboarding doc needed — Claude just knows |
+| Your standards change and everyone needs the update at once | Yes | You update once, push, everyone gets it |
+| You want a record of what instructions Claude was given | Yes | It's all in Git — you can see who changed what and when |
 
-### The short version
-
-Use a plugin when:
-- **Multiple people** need the **same instructions**
-- Those instructions **change over time** and everyone needs the latest
-- You want **git history** on what Claude was told to do
+**In plain English:** if more than one person needs Claude to do the same thing the same way, make it a plugin.
 
 ---
 
 ## 3. When NOT to Use a Plugin
 
-| Situation | Better alternative |
+**Don't use a plugin for things that are just for you, or just for one project.**
+
+| Situation | What to do instead |
 |---|---|
-| One-off personal preference ("I like tabs over spaces") | User-level `CLAUDE.md` or `settings.json` |
-| Project-specific context that only applies to one repo | Project `CLAUDE.md` in the repo root |
-| Temporary instructions for a single task | Just tell Claude in chat |
-| MCP server config that varies per machine | `.mcp.json` at project level |
-| Something only you care about | `~/.claude/CLAUDE.md` (user-level) |
-| Quick experiment or prototype skill | Single `SKILL.md` in `.claude/skills/` locally |
-| Instructions that reference secrets or local paths | Never put these in a shared plugin |
+| A personal preference (like "always use dark mode examples") | Put it in your personal Claude settings file |
+| Instructions that only matter for one specific project | Put a `CLAUDE.md` file in that project's folder |
+| A one-time instruction ("summarize this meeting") | Just tell Claude in the chat — no file needed |
+| Passwords, API keys, or anything secret | **Never** put secrets in a shared plugin |
+| Something you're just trying out | Test it locally first, make it a plugin later if it works |
 
-### The short version
-
-Skip the plugin when:
-- It's **just you** — use personal config files instead
-- It's **just this repo** — use project-level CLAUDE.md
-- It's **throwaway** — just say it in chat
-- It contains **secrets or machine-specific paths** — never distribute those
+**In plain English:** if it's just you, or just this one time, or it contains anything sensitive — skip the plugin.
 
 ---
 
-## 4. Team Setup — Getting Everyone on the Plugin
+## 4. Team Setup — How to Install the Plugin
 
-### What each person needs
+### Easiest way (from GitHub URL)
 
-- Claude Code CLI installed
-- Git access to the plugin repo
+If the repo is accessible to you on GitHub:
 
-### Steps (5 minutes)
+1. Open **Claude Code** (the desktop app or CLI)
+2. Go to **Plugins**
+3. Choose **Add from URL** (or "Install from GitHub")
+4. Paste this URL:
+   ```
+   https://github.com/rmalhotra-gls/Claude-Plugins-DW
+   ```
+5. Confirm the install
+6. Done — the 5 skills are now active
 
-**1 — Clone the repo**
+### Alternative way (manual clone)
+
+If the marketplace install doesn't work (private repo, network issues, etc.):
+
+**Step 1 — Download the repo**
+
+Open a terminal and run:
 
 ```bash
 git clone https://github.com/rmalhotra-gls/Claude-Plugins-DW.git
 ```
 
-Pick a stable location. Don't put it inside another project.
-Suggested: `C:\Users\<you>\Documents\Claude-Plugins-DW`
+Save it somewhere you won't accidentally delete it.
+Good spot: `C:\Users\YourName\Documents\Claude-Plugins-DW`
 
-**2 — Tell Claude Code where it is**
+**Step 2 — Tell Claude Code where you saved it**
 
-Open (or create) `~/.claude/settings.json` and add:
+Find (or create) this file on your computer:
+`C:\Users\YourName\.claude\settings.json`
+
+Open it in any text editor and add this:
 
 ```json
 {
   "plugins": [
-    { "path": "C:\\Users\\<you>\\Documents\\Claude-Plugins-DW" }
+    { "path": "C:\\Users\\YourName\\Documents\\Claude-Plugins-DW" }
   ]
 }
 ```
 
-Replace `<you>` with your Windows username.
+Replace `YourName` with your actual Windows username. The double backslashes (`\\`) are required on Windows.
 
-**3 — Verify it loaded**
+**Step 3 — Check that it works**
 
-Open Claude Code and type:
+Open Claude Code and type something like:
 
-```
-review this SQL
-```
+> review this SQL
 
-If Claude responds with the 6-area peer review format, it's working.
+If Claude responds with a structured 6-area peer review, the plugin is working.
 
-**4 — Staying up to date**
+### How to get updates
 
-When skills get updated, just pull:
+**If you installed from GitHub URL:** updates happen automatically when the repo is updated. Nothing to do.
+
+**If you installed manually:** open a terminal, go to where you saved the repo, and run:
 
 ```bash
-cd C:\Users\<you>\Documents\Claude-Plugins-DW
 git pull
 ```
 
-Next Claude Code session picks up the changes automatically. No reinstall.
+The next time you open Claude Code, it picks up the changes.
 
-### Troubleshooting
+### Something not working?
 
-| Problem | Fix |
+| What's happening | What to check |
 |---|---|
-| Skills don't trigger | Check the path in `settings.json` — backslashes must be doubled (`\\`) on Windows |
-| "Plugin not found" | Make sure the cloned folder has `.claude-plugin/marketplace.json` at root |
-| Old version of a skill | Run `git pull` in the plugin folder |
-| `settings.json` doesn't exist | Create it at `~/.claude/settings.json` (that's `C:\Users\<you>\.claude\settings.json` on Windows) |
+| Claude doesn't use the skills | Make sure the path in `settings.json` is correct and uses double backslashes |
+| "Plugin not found" error | Make sure the folder you pointed to has a `.claude-plugin` folder inside it |
+| Getting an old version of a skill | Run `git pull` in the plugin folder to get the latest |
+| Can't find `settings.json` | Create it yourself at `C:\Users\YourName\.claude\settings.json` |
+| Can't clone the repo | Ask for access to the GitHub repo from the DW team |
