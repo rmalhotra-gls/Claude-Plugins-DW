@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "description": "GLS Data Warehouse & BI Team skill library — Snowflake SQL standards, peer review, Python/Prefect review, SQL formatting, and code optimization.",
   "author": {
-    "name": "GLS Auto Data Warehouse & BI Team",
-    "email": "rmalhotra@glsauto.com"
+    "name": "GLS Auto Data Warehouse & BI Team"
   }
 }

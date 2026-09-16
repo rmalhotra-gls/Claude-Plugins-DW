@@ -20,39 +20,22 @@ Claude Code plugin for the GLS Auto Data Warehouse & BI Team. Gives Claude deep 
 - **`sql-formatter`** — produces the Formatted Query section at the end of every review
 - **`code-optimizer`** — drives the Performance area analysis
 
-All five skills must be installed together for a complete SQL peer review workflow.
+All five skills are bundled together for a complete SQL peer review workflow.
 
 ---
 
 ## Installation
 
-### Option 1 — Project-scoped (recommended for team use)
+### From the Plugin Directory (recommended)
 
-Clone the repo into your project and point Claude Code at it:
+1. Open Claude Code
+2. Open **Directory** > **Plugins**
+3. Find **dw-engineer** under the **Code** tab
+4. Click to install
 
-```bash
-git clone <repo-url> .claude-plugins/dw-engineer
-```
+### From settings.json
 
-Then add to your project's `.claude/settings.json`:
-
-```json
-{
-  "plugins": [
-    { "path": ".claude-plugins/dw-engineer" }
-  ]
-}
-```
-
-### Option 2 — Session flag
-
-```bash
-cc --plugin-dir /path/to/dw-engineer-plugin
-```
-
-### Option 3 — User-level (always-on)
-
-Clone once to a stable location and add to your user `~/.claude/settings.json`:
+Add to `~/.claude/settings.json`:
 
 ```json
 {
@@ -66,7 +49,7 @@ Clone once to a stable location and add to your user `~/.claude/settings.json`:
 
 ## Requirements
 
-- Claude Code CLI
+- Claude Code (desktop app or CLI)
 - No external dependencies — all skills are knowledge-only (no MCP servers, no hooks)
 
 ---
@@ -75,5 +58,4 @@ Clone once to a stable location and add to your user `~/.claude/settings.json`:
 
 1. Clone the repo
 2. Edit or add `SKILL.md` files under `skills/<skill-name>/`
-3. Test locally with `cc --plugin-dir /path/to/dw-engineer-plugin`
-4. Open a pull request
+3. Open a pull request
