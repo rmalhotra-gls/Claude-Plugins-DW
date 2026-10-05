@@ -29,7 +29,7 @@ Label every retrieval script clearly:
 
 | Needed | Script to Generate |
 |---|---|
-| Stored procedure DDL | `SELECT GET_DDL('PROCEDURE', '<schema>.<n>(<args>)');` |
+| Stored procedure DDL | `DECSRIBE PROCEDURE <schema>.<n>(<args>));` |
 | View definition | `SELECT GET_DDL('VIEW', '<schema>.<n>');` |
 | Table column list / schema | `DESC TABLE <schema>.<table>;` |
 | Config table entries | `SELECT * FROM <table> WHERE <filter>;` |
