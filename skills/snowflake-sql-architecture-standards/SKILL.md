@@ -5,7 +5,7 @@ description: GLS Auto Snowflake SQL architecture standards reference and enforce
 
 # GLS Auto — Snowflake SQL Architecture Standards
 
-> **Scope:** These are forward-looking standards for all NEW objects built in the GLS Auto Snowflake environment. Existing objects in `ODIN.DW` are legacy and may not comply — do not use them as reference for how new objects should be built. When touching existing objects, migrate them toward these standards.
+> **Scope:** These are forward-looking standards for all NEW objects built in the GLS Auto Snowflake environment. Existing objects in `ODIN.DW` are legacy and may not comply — do not use them as reference for how new objects should be built. When touching existing objects, migrate them toward these standards. sql-peer-reviewer skill.md should have more details on to-dos and don'ts incase this document is missing some of it.
 
 ---
 
@@ -161,12 +161,14 @@ All object names and column names are uppercase.
 ---
 
 ### Columns — IT (System/Audit) Fields
-IT fields go **at the end of every table definition**. No exceptions.
+All IT fields go **at the end of every table definition** except for IT Key. IT Key is the ONLY column that becomes the very FIRST column for all tables. No exceptions.
 
 | Field | Pattern | Data Type | Constraint |
 |---|---|---|---|
 | Insert timestamp | `IT_INSERTDATE` | `TIMESTAMP_NTZ` | `NOT NULL DEFAULT CURRENT_TIMESTAMP()` |
 | Update timestamp | `IT_UPDATEDATE` | `TIMESTAMP_NTZ` | `NOT NULL DEFAULT CURRENT_TIMESTAMP()` |
+| Effective From | `EFFECTIVEFROM` | `TIMESTAMP_NTZ` | `NOT NULL DEFAULT CURRENT_DATE()` |
+| Effective To | `EFFECTIVETO` | `TIMESTAMP_NTZ` | None, allowed to be NULL to signify active record |
 | Surrogate key | `IT_<tablename>KEY` | `NUMBER` | — |
 
 > **IT key rule:** Strip `FACT`, `DIM`, `LKP` from the table name — no abbreviation in the remainder.
@@ -204,17 +206,27 @@ $$
 -- ============================================================
 
 DECLARE
-	V_RESULT VARCHAR(20);
+	ExecutionLogUniqueKey VARCHAR;
+    AsOfDt DATE;
+    CurrentDatabase VARCHAR;
 
 BEGIN
+	SELECT TO_CHAR(UTIL.GETCURRENTDATETIME(), 'YYYYMMDDHHMISSFF3'), UTIL.GETYESTERDAY(), CURRENT_DATABASE()
+	INTO :ExecutionLogUniqueKey, :AsOfDt, :CurrentDatabase;
+
+	CALL MONITOR.LOADEXECUTIONLOG (:ExecutionLogUniqueKey, 'PROCEDURE', '<SCHEMA_NAME>', '<TABLE_NAME>', 'INPROCESS', NULL);
+
 	-- [your logic here]
 
-	V_RESULT := 'SUCCESS';
-	RETURN V_RESULT;
+	CALL MONITOR.LOADEXECUTIONLOG (:ExecutionLogUniqueKey, 'PROCEDURE', '<SCHEMA_NAME>', '<TABLE_NAME>', 'SUCCESS', NULL);
 
-EXCEPTION
-	WHEN OTHER THEN
-		RETURN 'ERROR: ' || SQLERRM;
+	return 'SUCCESS';
+
+	EXCEPTION
+	    
+		WHEN OTHER THEN
+			CALL MONITOR.LOADEXECUTIONLOG (:ExecutionLogUniqueKey, 'PROCEDURE', '<SCHEMA_NAME>', '<TABLE_NAME>', 'FAIL', NULL);
+	        RAISE;
 END;
 $$;
 ```
@@ -234,14 +246,14 @@ $$;
 CREATE OR REPLACE TABLE ODIN.DW.FACT<FULLTABLENAME>
 COMMENT = 'One row per <X> per <Y>. Source: ODIN.<STG>.<FULLTABLENAME>. Loaded by LOAD_<FULLTABLENAME>.'
 (
+	IT_<FULLTABLENAME>KEY NUMBER(38, 0) COMMENT 'Surrogate key. IT Field.'
 	-- Business columns
-	<FULLCOLUMNNAME1> <DATATYPE> NOT NULL COMMENT '<What this is, where it comes from.>',
-	<FULLCOLUMNNAME2> <DATATYPE> COMMENT '<What this is. NULL when X.>',
+	<FULLCOLUMNNAME1> <DATATYPE> NOT NULL COMMENT '<What this is>',
+	<FULLCOLUMNNAME2> <DATATYPE> COMMENT '<What this is>',
 
 	-- IT fields — always last
-	IT_INSERTDATE TIMESTAMP_NTZ NOT NULL DEFAULT CURRENT_TIMESTAMP() COMMENT 'Row insert timestamp. Auto-populated.',
-	IT_UPDATEDATE TIMESTAMP_NTZ NOT NULL DEFAULT CURRENT_TIMESTAMP() COMMENT 'Row last update timestamp. Updated on MERGE.',
-	IT_<FULLTABLENAME>KEY NUMBER COMMENT 'Surrogate key. System-generated.'
+	IT_INSERTDATE TIMESTAMP_NTZ(9) NOT NULL DEFAULT CURRENT_TIMESTAMP() COMMENT 'Row insert timestamp. IT Field.',
+	IT_UPDATEDATE TIMESTAMP_NTZ(9) NOT NULL DEFAULT CURRENT_TIMESTAMP() COMMENT 'Row last update timestamp. Updated on MERGE. IT Field.',
 );
 ```
 
@@ -281,25 +293,13 @@ Snowflake native error logging is enabled on tables. A formal framework is in pr
 
 ### Standards
 - Error tables must be **queryable and actionable** — not passive logs
-- DQ row-count checks must be embedded in `LOAD_` sprocs **before** committing data
-- On failure, sproc must return a clearly parseable error string so Prefect can catch and alert
 
 ### DQ Check Pattern
 
-```sql
--- Inside LOAD_ sproc, before INSERT/MERGE:
-LET V_SOURCEROWCOUNT INT := (
-	SELECT
-		COUNT(*)
-	FROM
-		ODIN.STG.LOANAPPLICATION
-	WHERE
-		LOADDATE >= CURRENT_DATE()
-);
+- We have a DQ Check framework - use Snowflake MCP, and query the db to find the right pattern and lineage and think about possible DQ Checks that could be applicable, and produce scripts accordingly.
 
-IF (V_SOURCEROWCOUNT = 0) THEN
-	RETURN 'ERROR: No source rows found for ' || CURRENT_DATE()::VARCHAR;
-END IF;
+```sql
+
 ```
 
 ---
