@@ -1,7 +1,8 @@
-
 ---
+
 name: sql-deployment-standards
 description: "Standards for RUN, ROLLBACK, and MONITORING deployment scripts with environment routing, cross-database references, and validation patterns for GLS Auto Snowflake. Trigger when writing, reviewing, or generating deployment scripts, or when user asks about RUN/ROLLBACK/MONITORING file structure, environment routing, or pre-built variable patterns."
+
 ---
 
 ## Environment Routing
