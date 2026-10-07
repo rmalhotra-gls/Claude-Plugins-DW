@@ -1,15 +1,7 @@
 
-## SQL Deployment Script Standards
-
-### Overview
-
-All SQL deployments must consist of three coordinated files:
-- **RUN.sql** — Creates or modifies objects and loads data
-- **ROLLBACK.sql** — Safely reverts all changes from RUN.sql
-- **MONITORING.sql** — Validates deployment success with standardized output
-
-These files work together to ensure deployments are repeatable, reversible, and auditable. Every team member must be able to run any script and understand exactly what happened — without asking the author, without digging through logs, and without trial-and-error diagnostics.
-
+---
+name: sql-deployment-standards
+description: "Standards for RUN, ROLLBACK, and MONITORING deployment scripts with environment routing, cross-database references, and validation patterns for GLS Auto Snowflake. Trigger when writing, reviewing, or generating deployment scripts, or when user asks about RUN/ROLLBACK/MONITORING file structure, environment routing, or pre-built variable patterns."
 ---
 
 ## Environment Routing
@@ -57,7 +49,9 @@ USE DATABASE IDENTIFIER($DB_HEIMDALL);
 For inline schema references:
 
 ```sql
-SELECT * FROM IDENTIFIER($DB_ODIN || '.INFORMATION_SCHEMA.COLUMNS');
+-- Pre-build the reference, then use it
+SET V_O_INFO_COLS = $DB_ODIN || '.INFORMATION_SCHEMA.COLUMNS';
+SELECT * FROM IDENTIFIER($V_O_INFO_COLS);
 ```
 
 ---
