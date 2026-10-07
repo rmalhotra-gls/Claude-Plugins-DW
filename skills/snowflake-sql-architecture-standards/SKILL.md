@@ -72,14 +72,14 @@ Inline in the column definition:
 CREATE OR REPLACE TABLE ODIN.DW.FACTLOANAPPLICATION
 COMMENT = 'One row per loan application. Grain: ApplicationID.'
 (
-	APPLICATIONID TEXT NOT NULL COMMENT 'Unique application identifier from DeFi LOS. Natural key.',
-	DEALID TEXT COMMENT 'Associated deal ID. NULL if application has not been booked.',
+	IT_LOANAPPLICATIONKEY NUMBER(38,0) NOT NULL AUTOINCREMENT START 1 INCREMENT 1 ORDER COMMENT 'Surrogate key. IT Field.',
+	APPLICATIONID VARCHAR(20) NOT NULL COMMENT 'Unique application identifier from DeFi LOS. Natural key.',
+	DEALID VARCHAR(50) COMMENT 'Associated deal ID. NULL if application has not been booked.',
 	LOANAMOUNT NUMBER(18, 2) COMMENT 'Requested loan amount in USD at time of application.',
-	APPLICATIONSTATUS TEXT COMMENT 'Current status code. Joins to ODIN.DW.LKPAPPLICATIONSTATUS.',
+	APPLICATIONSTATUS VARCHAR(2) COMMENT 'Current status code. Joins to ODIN.DW.LKPAPPLICATIONSTATUS.',
 	-- ... business columns ...
-	IT_INSERTDATE TIMESTAMP_NTZ NOT NULL DEFAULT CURRENT_TIMESTAMP() COMMENT 'Row insert timestamp. Auto-populated on load.',
-	IT_UPDATEDATE TIMESTAMP_NTZ NOT NULL DEFAULT CURRENT_TIMESTAMP() COMMENT 'Row last update timestamp. Updated on each MERGE.',
-	IT_LOANAPPLICATIONKEY NUMBER COMMENT 'Surrogate key. System-generated. Do not use as join key in reports.'
+	IT_INSERTDATE TIMESTAMP_NTZ(9) NOT NULL DEFAULT CURRENT_TIMESTAMP() COMMENT 'Row insert timestamp. IT Field.',
+	IT_UPDATEDATE TIMESTAMP_NTZ(9) NOT NULL DEFAULT CURRENT_TIMESTAMP() COMMENT 'Row last update timestamp. IT Field.'
 );
 ```
 
@@ -165,11 +165,11 @@ All IT fields go **at the end of every table definition** except for IT Key. IT 
 
 | Field | Pattern | Data Type | Constraint |
 |---|---|---|---|
-| Insert timestamp | `IT_INSERTDATE` | `TIMESTAMP_NTZ` | `NOT NULL DEFAULT CURRENT_TIMESTAMP()` |
-| Update timestamp | `IT_UPDATEDATE` | `TIMESTAMP_NTZ` | `NOT NULL DEFAULT CURRENT_TIMESTAMP()` |
-| Effective From | `EFFECTIVEFROM` | `TIMESTAMP_NTZ` | `NOT NULL DEFAULT CURRENT_DATE()` |
-| Effective To | `EFFECTIVETO` | `TIMESTAMP_NTZ` | None, allowed to be NULL to signify active record |
-| Surrogate key | `IT_<tablename>KEY` | `NUMBER` | — |
+| Insert timestamp | `IT_INSERTDATE` | `TIMESTAMP_NTZ(9)` | `NOT NULL DEFAULT CURRENT_TIMESTAMP()` |
+| Update timestamp | `IT_UPDATEDATE` | `TIMESTAMP_NTZ(9)` | `NOT NULL DEFAULT CURRENT_TIMESTAMP()` |
+| Effective From | `EFFECTIVEFROM` | `TIMESTAMP_NTZ(9)` | `NOT NULL DEFAULT CURRENT_DATE()` |
+| Effective To | `EFFECTIVETO` | `TIMESTAMP_NTZ(9)` | None, allowed to be NULL to signify active record |
+| Surrogate key | `IT_<tablename>KEY` | `NUMBER(38, 0)` | — |
 
 > **IT key rule:** Strip `FACT`, `DIM`, `LKP` from the table name — no abbreviation in the remainder.
 > `FACTLOANAPPLICATION` → `IT_LOANAPPLICATIONKEY`
@@ -246,7 +246,7 @@ $$;
 CREATE OR REPLACE TABLE ODIN.DW.FACT<FULLTABLENAME>
 COMMENT = 'One row per <X> per <Y>. Source: ODIN.<STG>.<FULLTABLENAME>. Loaded by LOAD_<FULLTABLENAME>.'
 (
-	IT_<FULLTABLENAME>KEY NUMBER(38, 0) COMMENT 'Surrogate key. IT Field.'
+	IT_<FULLTABLENAME>KEY  NUMBER(38,0) NOT NULL AUTOINCREMENT START 1 INCREMENT 1 ORDER COMMENT 'Surrogate key. IT Field.',
 	-- Business columns
 	<FULLCOLUMNNAME1> <DATATYPE> NOT NULL COMMENT '<What this is>',
 	<FULLCOLUMNNAME2> <DATATYPE> COMMENT '<What this is>',
