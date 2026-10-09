@@ -129,32 +129,40 @@ WHERE
 
 ---
 
-## Cross-Database Views (Limitation & Workaround)
+## Cross-Database Views
 
-### Limitation
+### Dynamic Database Routing via Anonymous Block
 
-Snowflake views do not currently support dynamic database routing through variables when views are persisted objects. A view definition is compiled at creation time and cannot reference variables.
-
-### Workaround: Fully Qualify in View Definitions
-
-For cross-database views, fully qualify the database name in the view definition:
+When a view must reference a different database and you don't want to maintain separate environment-specific copies, use an anonymous EXECUTE IMMEDIATE block to build the CREATE VIEW DDL with the resolved database variable:
 
 ```sql
-CREATE OR REPLACE VIEW VALHALLA.INTELLIGENCE.VW_SALESAGENTAGEDTITLES AS
-SELECT
-    a.AGENTID,
-    a.TITLE,
-    a.AGEBAND,
-    d.DEALERNAME
-FROM
-    ODIN.DW.DIM_SALESAGENT a
-    INNER JOIN ODIN.DW.DIM_DEALER d
-        ON a.DEALERID = d.DEALERID
-WHERE
-    a.ISACTIVE = TRUE;
+-- Set environment routing first (full 4-database block above)
+
+USE DATABASE IDENTIFIER($DB_MJOLNIR);
+
+EXECUTE IMMEDIATE $$
+DECLARE
+    V_DB_ODIN VARCHAR;
+BEGIN
+    SELECT $DB_ODIN INTO :V_DB_ODIN;
+
+    EXECUTE IMMEDIATE
+        'CREATE OR REPLACE VIEW INTELLIGENCE.VW_SALESAGENTAGEDTITLES AS
+         SELECT
+             A.AGENTID,
+             A.TITLE,
+             A.AGEBAND,
+             D.DEALERNAME
+         FROM ' || :V_DB_ODIN || '.DW.DIM_SALESAGENT A
+             INNER JOIN ' || :V_DB_ODIN || '.DW.DIM_DEALER D
+                 ON A.DEALERID = D.DEALERID
+         WHERE
+             A.ISACTIVE = TRUE';
+END;
+$$;
 ```
 
-**Note:** This means cross-database views **must be created separately for each environment** or hardcoded to a specific environment.
+**Why this works:** EXECUTE IMMEDIATE resolves the database variable at runtime and bakes the literal database name into the compiled view definition. The view itself ends up with a hardcoded reference, but the *script* that creates it is environment-agnostic — same script runs in TEST, UAT, and PROD without modification.
 
 ---
 
