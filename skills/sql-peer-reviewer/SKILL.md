@@ -273,6 +273,9 @@ SET DB_VALHALLA = CASE
 END;
 ```
 
+It is acceptable to only include the databases that are actually going to be referenced in the file/query, it doesn't HAVE to have all 4 references though.
+But it is UNACCEPTABLE to miss a routing block for a database being used in the file/query.
+
 ### Database Reference Rules
 
 #### NOT ACCEPTABLE — Always Flag These
