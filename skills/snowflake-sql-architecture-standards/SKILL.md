@@ -242,6 +242,8 @@ $$;
 
 ## 5. Table DDL Template
 
+- Whether making a new table, or altering an existing one, when defining data types: Make sure to have a data type and an accompanying precision/scale that makes sense, So, it should be in sync with the rest of the table structure, if getting loaded by a sproc, check the source values, and confirm what is the target value that can come in for that field when deciding column size and type.
+  
 ```sql
 CREATE OR REPLACE TABLE ODIN.DW.FACT<FULLTABLENAME>
 COMMENT = 'One row per <X> per <Y>. Source: ODIN.<STG>.<FULLTABLENAME>. Loaded by LOAD_<FULLTABLENAME>.'
