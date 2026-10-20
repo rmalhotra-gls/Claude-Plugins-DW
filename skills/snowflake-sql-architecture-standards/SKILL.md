@@ -49,7 +49,7 @@ SRC / STG<domain> → STG → DW
 
 ### Why
 Comments are the first line of defense when something breaks. They answer "what is this, where does it come from, and who owns it?" without needing to track someone down.
-They need to be generic, factual and permanent. No ticket IDs, no phase(s) language
+They need to be generic, factual and permanent. No ticket IDs, no phase(s) language.
 
 ### Table / View Comments
 Set at DDL time using `COMMENT = '...'`:
