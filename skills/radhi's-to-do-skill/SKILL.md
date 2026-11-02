@@ -52,6 +52,7 @@ The dump may be a few words, half-sentences or a ramble. Turn it into tasks:
 - **title**: starts with a verb, one action, 15 words or fewer.
 - **context**: optional, 25 words or fewer. Only facts she stated: people, systems, links, examples, open questions.
 - **due**: only if she stated a timeframe ("next week", "by Friday"). Copy it verbatim; otherwise null. Never invent dates or time estimates.
+- **dueDate**: `YYYY-MM-DD`, only when her stated timeframe points to one specific day ("by Friday" → the coming Friday; "Dec 30" → that date), counted from logDate. Otherwise null, including vague ones like "next week" or "soon". The artifact treats null as the Monday after the log date.
 - **PRESERVE THE QUESTION ASKED.** "Check if X works without GitHub" stays a check of whether X works without GitHub. It never becomes "get people GitHub access" or any other task she did not ask for.
 - Split a line that bundles separate tasks; combine lines that are the same task. Never drop a task.
 - Keep every name, system, link and number exactly as she wrote it. Add no solutions, opinions or steps of your own.
@@ -70,6 +71,7 @@ The dump may be a few words, half-sentences or a ramble. Turn it into tasks:
   "title": "...",
   "context": "... or null",
   "due": "verbatim or null",
+  "dueDate": "YYYY-MM-DD or null",
   "needsReview": false,
   "logDate": "YYYY-MM-DD: today in America/New_York, unless she names the day it came in",
   "runTime": null,
@@ -92,7 +94,7 @@ Logged 3 tasks → Friday, October 30.
 
 | # | Task | Context | Due |
 |---|------|---------|-----|
-| 1 | ...  | ...     | —   |
+| 1 | ...  | ...     | Mon, Nov 9 (default) |
 ```
 
-Mark any item with `needsReview: true` as "⚠ check wording" in the Task cell.
+Mark any item with `needsReview: true` as "⚠ check wording" in the Task cell. In the Due cell, show dueDate, or the Monday after logDate followed by "(default)" when dueDate is null.
